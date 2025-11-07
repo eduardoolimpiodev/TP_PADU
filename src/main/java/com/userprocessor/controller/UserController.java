@@ -6,6 +6,7 @@ import com.userprocessor.enums.OutputFormat;
 import com.userprocessor.service.FileProcessingService;
 import com.userprocessor.service.OutputFormatterService;
 import com.userprocessor.service.UserService;
+import com.userprocessor.validation.ValidFileType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
@@ -41,7 +42,7 @@ public class UserController {
     @PostMapping("/upload")
     public ResponseEntity<Map<String, Object>> uploadFile(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("fileType") String fileType) {
+            @RequestParam("fileType") @ValidFileType String fileType) {
         
         Map<String, Object> response = new HashMap<>();
         
