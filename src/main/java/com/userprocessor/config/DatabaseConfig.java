@@ -1,5 +1,7 @@
 package com.userprocessor.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
@@ -12,14 +14,17 @@ import java.net.URI;
 @Configuration
 public class DatabaseConfig {
 
+    private static final Logger logger = LoggerFactory.getLogger(DatabaseConfig.class);
+
     @Value("${DATABASE_URL:postgresql://postgres:VHNcMuVaXSkHWTbQTqYCBwewRMLvovwS@shinkansen.proxy.rlwy.net:44677/railway}")
     private String databaseUrl;
 
     @Bean
     @Primary
     public DataSource dataSource() {
+        logger.info("Creating DataSource with DATABASE_URL: {}", databaseUrl);
+        
         try {
-            // Parse the DATABASE_URL from Railway
             URI dbUri = new URI(databaseUrl);
             
             String username = null;
@@ -38,6 +43,9 @@ public class DatabaseConfig {
                     dbUri.getPort(),
                     dbUri.getPath());
             
+            logger.info("Parsed JDBC URL: {}", jdbcUrl);
+            logger.info("Username: {}", username);
+            
             return DataSourceBuilder.create()
                     .url(jdbcUrl)
                     .username(username)
@@ -46,7 +54,7 @@ public class DatabaseConfig {
                     .build();
                     
         } catch (Exception e) {
-            // Fallback for local development
+            logger.error("Failed to parse DATABASE_URL, falling back to H2: {}", e.getMessage());
             return DataSourceBuilder.create()
                     .url("jdbc:h2:mem:testdb")
                     .username("sa")
