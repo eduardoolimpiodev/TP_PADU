@@ -2,9 +2,8 @@ package com.userprocessor.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.jdbc.DataSourceBuilder;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -17,68 +16,75 @@ public class DatabaseConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(DatabaseConfig.class);
 
-    @Value("${DATABASE_URL:}")
-    private String databaseUrl;
+    @Bean
+    @Primary
+    @ConfigurationProperties("spring.datasource")
+    public DataSourceProperties dataSourceProperties() {
+        logger.info("=== CONFIGURING DATASOURCE PROPERTIES ===");
+        
+        String databaseUrl = System.getenv("DATABASE_URL");
+        logger.info("Environment DATABASE_URL: {}", databaseUrl);
+        
+        DataSourceProperties properties = new DataSourceProperties();
+        
+        if (databaseUrl != null && !databaseUrl.isEmpty()) {
+            try {
+                logger.info("Parsing Railway DATABASE_URL...");
+                URI dbUri = new URI(databaseUrl);
+                
+                String username = null;
+                String password = null;
+                
+                if (dbUri.getUserInfo() != null) {
+                    String[] userInfo = dbUri.getUserInfo().split(":");
+                    username = userInfo[0];
+                    if (userInfo.length > 1) {
+                        password = userInfo[1];
+                    }
+                }
+                
+                String jdbcUrl = String.format("jdbc:postgresql://%s:%d%s",
+                        dbUri.getHost(),
+                        dbUri.getPort(),
+                        dbUri.getPath());
+                
+                logger.info("Parsed JDBC URL: {}", jdbcUrl);
+                logger.info("Username: {}", username);
+                logger.info("Host: {}", dbUri.getHost());
+                logger.info("Port: {}", dbUri.getPort());
+                logger.info("Path: {}", dbUri.getPath());
+                
+                properties.setUrl(jdbcUrl);
+                properties.setUsername(username);
+                properties.setPassword(password);
+                properties.setDriverClassName("org.postgresql.Driver");
+                
+                logger.info("DataSource properties configured successfully!");
+                
+            } catch (Exception e) {
+                logger.error("Failed to parse DATABASE_URL: {}", e.getMessage(), e);
+                throw new RuntimeException("Failed to configure database", e);
+            }
+        } else {
+            logger.info("=== LOCAL H2 DATABASE CONFIG ===");
+            logger.info("DATABASE_URL not found, using H2 for local development");
+            
+            properties.setUrl("jdbc:h2:mem:testdb");
+            properties.setUsername("sa");
+            properties.setPassword("");
+            properties.setDriverClassName("org.h2.Driver");
+        }
+        
+        return properties;
+    }
 
     @Bean
     @Primary
-    @ConditionalOnProperty(name = "DATABASE_URL")
-    public DataSource railwayDataSource() {
-        logger.info("=== RAILWAY DATABASE CONFIG ===");
-        logger.info("Creating DataSource with DATABASE_URL: {}", databaseUrl);
+    public DataSource dataSource(DataSourceProperties properties) {
+        logger.info("=== CREATING DATASOURCE BEAN ===");
+        logger.info("Final JDBC URL: {}", properties.getUrl());
+        logger.info("Final Username: {}", properties.getUsername());
         
-        try {
-            URI dbUri = new URI(databaseUrl);
-            
-            String username = null;
-            String password = null;
-            
-            if (dbUri.getUserInfo() != null) {
-                String[] userInfo = dbUri.getUserInfo().split(":");
-                username = userInfo[0];
-                if (userInfo.length > 1) {
-                    password = userInfo[1];
-                }
-            }
-            
-            String jdbcUrl = String.format("jdbc:postgresql://%s:%d%s",
-                    dbUri.getHost(),
-                    dbUri.getPort(),
-                    dbUri.getPath());
-            
-            logger.info("Parsed JDBC URL: {}", jdbcUrl);
-            logger.info("Username: {}", username);
-            logger.info("Host: {}", dbUri.getHost());
-            logger.info("Port: {}", dbUri.getPort());
-            logger.info("Path: {}", dbUri.getPath());
-            
-            DataSource ds = DataSourceBuilder.create()
-                    .url(jdbcUrl)
-                    .username(username)
-                    .password(password)
-                    .driverClassName("org.postgresql.Driver")
-                    .build();
-                    
-            logger.info("DataSource created successfully!");
-            return ds;
-                    
-        } catch (Exception e) {
-            logger.error("Failed to parse DATABASE_URL: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to configure database", e);
-        }
-    }
-    
-    @Bean
-    @ConditionalOnProperty(name = "DATABASE_URL", havingValue = "", matchIfMissing = true)
-    public DataSource localDataSource() {
-        logger.info("=== LOCAL H2 DATABASE CONFIG ===");
-        logger.info("DATABASE_URL not found, using H2 for local development");
-        
-        return DataSourceBuilder.create()
-                .url("jdbc:h2:mem:testdb")
-                .username("sa")
-                .password("")
-                .driverClassName("org.h2.Driver")
-                .build();
+        return properties.initializeDataSourceBuilder().build();
     }
 }
