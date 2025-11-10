@@ -1,16 +1,29 @@
 package com.userprocessor.dto;
 
 import com.userprocessor.entity.User;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 
+@Schema(description = "User response data transfer object")
 public class UserResponseDto {
 
+    @Schema(description = "User unique identifier", example = "1")
     private Long id;
+    
+    @Schema(description = "User full name", example = "John Doe")
     private String name;
+    
+    @Schema(description = "User email address", example = "john.doe@example.com")
     private String email;
+    
+    @Schema(description = "File source type", example = "csv")
     private String source;
+    
+    @Schema(description = "User creation timestamp")
     private LocalDateTime createdAt;
+    
+    @Schema(description = "User last update timestamp")
     private LocalDateTime updatedAt;
 
     public UserResponseDto() {}

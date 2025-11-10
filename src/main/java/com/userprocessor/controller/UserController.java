@@ -7,6 +7,14 @@ import com.userprocessor.service.FileProcessingService;
 import com.userprocessor.service.OutputFormatterService;
 import com.userprocessor.service.UserService;
 import com.userprocessor.validation.ValidFileType;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
@@ -23,6 +31,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
+@Tag(name = "User Management", description = "Operations for managing users and file processing")
 public class UserController {
 
     private final UserService userService;
@@ -39,9 +48,42 @@ public class UserController {
         this.outputFormatterService = outputFormatterService;
     }
 
+    @Operation(
+        summary = "Upload and process user data file",
+        description = "Upload a CSV, JSON, or XML file containing user data for processing and storage"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200", 
+            description = "File processed successfully",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ProcessingResult.class),
+                examples = @ExampleObject(
+                    value = """
+                    {
+                      "success": true,
+                      "message": "File processed successfully",
+                      "data": {
+                        "totalRecords": 100,
+                        "processedRecords": 95,
+                        "skippedRecords": 3,
+                        "errorRecords": 2
+                      }
+                    }
+                    """
+                )
+            )
+        ),
+        @ApiResponse(responseCode = "400", description = "Invalid file or validation error"),
+        @ApiResponse(responseCode = "413", description = "File size exceeds limit"),
+        @ApiResponse(responseCode = "429", description = "Rate limit exceeded")
+    })
     @PostMapping("/upload")
     public ResponseEntity<Map<String, Object>> uploadFile(
+            @Parameter(description = "File to upload (CSV, JSON, or XML)", required = true)
             @RequestParam("file") MultipartFile file,
+            @Parameter(description = "File type", required = true, example = "csv")
             @RequestParam("fileType") @ValidFileType String fileType) {
         
         Map<String, Object> response = new HashMap<>();
@@ -64,10 +106,21 @@ public class UserController {
         }
     }
 
+    @Operation(
+        summary = "Get all users with optional formatting",
+        description = "Retrieve all users with pagination and format options (JSON, CSV, XML)"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Users retrieved successfully"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @GetMapping
     public ResponseEntity<?> getAllUsers(
+            @Parameter(description = "Output format", example = "json")
             @RequestParam(defaultValue = "json") String format,
+            @Parameter(description = "Page number", example = "0")
             @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size", example = "10")
             @RequestParam(defaultValue = "10") int size) {
         
         try {

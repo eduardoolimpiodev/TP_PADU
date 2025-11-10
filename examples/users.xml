@@ -1,0 +1,42 @@
+<users>
+  <user>
+    <name>John Doe</name>
+    <email>john.doe@example.com</email>
+  </user>
+  <user>
+    <name>Jane Smith</name>
+    <email>jane.smith@example.com</email>
+  </user>
+  <user>
+    <name>Michael Johnson</name>
+    <email>michael.johnson@example.com</email>
+  </user>
+  <user>
+    <name>Emily Davis</name>
+    <email>emily.davis@example.com</email>
+  </user>
+  <user>
+    <name>David Wilson</name>
+    <email>david.wilson@example.com</email>
+  </user>
+  <user>
+    <name>Sarah Brown</name>
+    <email>sarah.brown@example.com</email>
+  </user>
+  <user>
+    <name>Robert Jones</name>
+    <email>robert.jones@example.com</email>
+  </user>
+  <user>
+    <name>Lisa Garcia</name>
+    <email>lisa.garcia@example.com</email>
+  </user>
+  <user>
+    <name>Christopher Miller</name>
+    <email>christopher.miller@example.com</email>
+  </user>
+  <user>
+    <name>Amanda Martinez</name>
+    <email>amanda.martinez@example.com</email>
+  </user>
+</users>
