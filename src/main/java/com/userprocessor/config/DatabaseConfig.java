@@ -1,46 +1,58 @@
 package com.userprocessor.config;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.jdbc.DataSourceBuilder;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+
+import javax.sql.DataSource;
+import java.net.URI;
 
 @Configuration
-@ConfigurationProperties(prefix = "spring.datasource")
 public class DatabaseConfig {
 
-    private String url;
-    private String username;
-    private String password;
-    private String driverClassName;
+    @Value("${DATABASE_URL:postgresql://postgres:VHNcMuVaXSkHWTbQTqYCBwewRMLvovwS@shinkansen.proxy.rlwy.net:44677/railway}")
+    private String databaseUrl;
 
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getDriverClassName() {
-        return driverClassName;
-    }
-
-    public void setDriverClassName(String driverClassName) {
-        this.driverClassName = driverClassName;
+    @Bean
+    @Primary
+    public DataSource dataSource() {
+        try {
+            // Parse the DATABASE_URL from Railway
+            URI dbUri = new URI(databaseUrl);
+            
+            String username = null;
+            String password = null;
+            
+            if (dbUri.getUserInfo() != null) {
+                String[] userInfo = dbUri.getUserInfo().split(":");
+                username = userInfo[0];
+                if (userInfo.length > 1) {
+                    password = userInfo[1];
+                }
+            }
+            
+            String jdbcUrl = String.format("jdbc:postgresql://%s:%d%s",
+                    dbUri.getHost(),
+                    dbUri.getPort(),
+                    dbUri.getPath());
+            
+            return DataSourceBuilder.create()
+                    .url(jdbcUrl)
+                    .username(username)
+                    .password(password)
+                    .driverClassName("org.postgresql.Driver")
+                    .build();
+                    
+        } catch (Exception e) {
+            // Fallback for local development
+            return DataSourceBuilder.create()
+                    .url("jdbc:h2:mem:testdb")
+                    .username("sa")
+                    .password("")
+                    .driverClassName("org.h2.Driver")
+                    .build();
+        }
     }
 }
