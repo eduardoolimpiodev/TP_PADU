@@ -55,7 +55,7 @@ public class RateLimitingFilter implements Filter {
     }
 
     private void sendRateLimitResponse(HttpServletResponse response) throws IOException {
-        response.setStatus(HttpServletResponse.SC_TOO_MANY_REQUESTS);
+        response.setStatus(429);
         response.setContentType("application/json");
         
         ApiResponse<Object> apiResponse = ApiResponse.error(
