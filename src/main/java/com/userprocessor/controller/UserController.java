@@ -4,6 +4,7 @@ import com.userprocessor.dto.ProcessingResult;
 import com.userprocessor.dto.UserDto;
 import com.userprocessor.dto.UserResponseDto;
 import com.userprocessor.entity.User;
+import com.userprocessor.repository.UserRepository;
 import com.userprocessor.enums.OutputFormat;
 import com.userprocessor.service.FileProcessingService;
 import com.userprocessor.service.OutputFormatterService;
@@ -39,15 +40,18 @@ public class UserController {
     private final UserService userService;
     private final FileProcessingService fileProcessingService;
     private final OutputFormatterService outputFormatterService;
+    private final UserRepository userRepository;
 
     @Autowired
     public UserController(
             UserService userService,
             FileProcessingService fileProcessingService,
-            OutputFormatterService outputFormatterService) {
+            OutputFormatterService outputFormatterService,
+            UserRepository userRepository) {
         this.userService = userService;
         this.fileProcessingService = fileProcessingService;
         this.outputFormatterService = outputFormatterService;
+        this.userRepository = userRepository;
     }
 
     @Operation(
@@ -137,7 +141,7 @@ public class UserController {
             user.setEmail(userDto.getEmail());
             user.setSource("manual");
             
-            User savedUser = userService.saveUser(user);
+            User savedUser = userRepository.save(user);
             
             response.put("success", true);
             response.put("message", "User created successfully");
