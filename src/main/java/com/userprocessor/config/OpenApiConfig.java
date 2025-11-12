@@ -15,6 +15,10 @@ public class OpenApiConfig {
 
     @Bean
     public OpenAPI userDataProcessorOpenAPI() {
+        Server prodServer = new Server();
+        prodServer.setUrl("https://tppadu-production.up.railway.app");
+        prodServer.setDescription("Server URL in Production environment (Railway)");
+
         Server devServer = new Server();
         devServer.setUrl("http://localhost:8080");
         devServer.setDescription("Server URL in Development environment");
@@ -37,6 +41,6 @@ public class OpenApiConfig {
 
         return new OpenAPI()
                 .info(info)
-                .servers(List.of(devServer));
+                .servers(List.of(prodServer, devServer));
     }
 }
