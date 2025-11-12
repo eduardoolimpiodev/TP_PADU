@@ -1,7 +1,9 @@
 package com.userprocessor.controller;
 
 import com.userprocessor.dto.ProcessingResult;
+import com.userprocessor.dto.UserDto;
 import com.userprocessor.dto.UserResponseDto;
+import com.userprocessor.entity.User;
 import com.userprocessor.enums.OutputFormat;
 import com.userprocessor.service.FileProcessingService;
 import com.userprocessor.service.OutputFormatterService;
@@ -100,6 +102,52 @@ public class UserController {
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error processing file");
+            response.put("error", e.getMessage());
+            
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+    }
+
+    @Operation(
+        summary = "Create a new user",
+        description = "Create a single user with name and email"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "201", 
+            description = "User created successfully",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = User.class)
+            )
+        ),
+        @ApiResponse(responseCode = "400", description = "Invalid input data"),
+        @ApiResponse(responseCode = "409", description = "User with email already exists")
+    })
+    @PostMapping
+    public ResponseEntity<Map<String, Object>> createUser(
+            @Parameter(description = "User data", required = true)
+            @RequestBody UserDto userDto) {
+        
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            User user = new User();
+            user.setName(userDto.getName());
+            user.setEmail(userDto.getEmail());
+            user.setSource("manual");
+            
+            User savedUser = userService.saveUser(user);
+            
+            response.put("success", true);
+            response.put("message", "User created successfully");
+            response.put("data", savedUser);
+            
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error creating user");
             response.put("error", e.getMessage());
             
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
